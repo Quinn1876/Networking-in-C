@@ -43,3 +43,12 @@ int sendSocketMessage(int socketfd, U8 *buf, int *len) {
   *len = total;
   return n == -1 ? -1 : 0;
 }
+
+int getFileSize(const char* filePath) {
+  struct stat st;
+  if (stat(filePath, &st) == 0) {
+    return st.st_size;
+  }
+
+  return -1;
+}

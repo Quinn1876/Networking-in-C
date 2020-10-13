@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <arpa/inet.h> /* hton and ntoh functions */
@@ -61,6 +62,15 @@ size_t readSocketMessage(int socketfd, U8* buffer, U32 length);
 int sendSocketMessage(int socketfd, U8 *buf, int *len);
 
 /**
+ * @func: getFileSize
+ * @brief: return the size of a file, in bytes
+ * @param filePath const char*: the path of the file which you wish to know the size of.
+ * @return  int fileSize in bytes;
+ *          < 0 := failure
+ */
+int getFileSize(const char* filePath);
+
+/**
  * @func: startServer
  * @brief: Opens the Server on the given socket
  * @param socketfd int: the file descriptor of the socket to bind the server to.
@@ -77,3 +87,4 @@ int startServer(int socketfd);
  *          <>0 := failure
  */
 int startClient(int socketfd);
+
