@@ -1,5 +1,9 @@
 #include "main.h"
 #include "http.h"
+#include "http_header_parser.h"
+
+#define REQUEST_BUFFER_SIZE 4096
+// #define DEBUG_HTTP_SERVER_LOGGING 0
 
 int httpServer() {
   /* Open the html file that the server will send back in the default response */
@@ -20,7 +24,7 @@ int httpServer() {
   int header_size = (1024 + html_fileSize);
   char *http_header = (char *)malloc(header_size);
   memset(http_header, 0, header_size);
-  strcpy(http_header, "HTTP/1.1 200 OK\r\n\r\n");
+  sprintf(http_header, "HTTP/1.1 200 OK\r\nContent-Length: %d\r\n\r\n", header_size);
   strcat(http_header, response_data);
 
 
@@ -53,48 +57,78 @@ int httpServer() {
   printf("Now accepting communication on 0.0.0.0:8080\n\n");
 
   int client_socket;
-  char buf[4096];
+  char request_buffer[REQUEST_BUFFER_SIZE];
   char method[10];
   char request[2048];
   char version[10];
-  U32 bufcursor;
-  while (1) {
-    /* Don't store the client info */
+
+  HTTP_HEADER_PARSER* parser;
+  httpHeaderParser_init(&parser);
+
+
+  do { /* *** Main Loop for the Server *** */
+
+    /* Accept client connection - Don't store the client info */
     client_socket = accept(server_socket, NULL, NULL);
     printf("Client Conected\n");
 
     /* Get the info from the request and read it into memory */
-    recv(client_socket, buf, 4096, 0);
+    recv(client_socket, request_buffer, REQUEST_BUFFER_SIZE, 0);
+
+    #ifdef DEBUG_HTTP_SERVER_LOGGING
+      printf("Request Buffer: \n%s\n", request_buffer);
+    #endif /* DEBUG_HTTP_SERVER_LOGGING */
+
+    /* Declare Variables */
     int line_start = 0;
-    int bufcursor = 0;
-    char temp_header[100];
-    char temp_header_value[100];
-    while (bufcursor - line_start != 2) {/* WHILE IN HEADER */
-      /* Read the header and its value */
-      scanf(buf + bufcursor, "%s:%s\r\n", temp_header, temp_header_value);
+    int request_buffer_cursor = 0;
+    char header_key[100];
+    char header_value[100];
+    struct http_header header;
+    memset(header.content_type, 0, sizeof(header.content_type)); /* TODO: Write an INIT func for http header */
+    header.content_length = 0;
+
+
+    /**
+     * Http Headers are ended by \r\n\r\n
+     * So if after the first newline is found, the second will be found imediatly with a distance of 2
+     */
+    while (request_buffer_cursor - line_start != 2) {/* WHILE IN HEADER */
+      if (request_buffer_cursor == 0) {
+        /* Read the first line of the request header */
+        sscanf(request_buffer, "%s %s HTTP/%s\r\n", method, request, version); /* TODO: Error Handling */
+      } else if ((sscanf(request_buffer + request_buffer_cursor, "%s %s\r\n", header_key, header_value)) > 0) { /* Read the header and its value */
+          httpHeaderParser_setHttpHeader(parser, &header, header_key, header_value);
+      }
 
       /* Parse to the end of the line */
-      for(line_start = bufcursor; buf[bufcursor] != '\r' || buf[bufcursor] != '\n'; ++bufcursor) {}
+      for (
+        line_start = request_buffer_cursor;
+        request_buffer[request_buffer_cursor] != '\r' && request_buffer[request_buffer_cursor] != '\n' && request_buffer_cursor < REQUEST_BUFFER_SIZE;
+         ++request_buffer_cursor
+      ) {}
       /* Parse past the EOL characters */
-      if (buf[bufcursor] == '\r')
-        ++bufcursor;
-      if (buf[bufcursor] == '\n')
-        ++bufcursor;
+      if (request_buffer[request_buffer_cursor] == '\r')
+        ++request_buffer_cursor;
+      if (request_buffer[request_buffer_cursor] == '\n')
+        ++request_buffer_cursor;
     }
 
-
-    sscanf(buf, "%s %s HTTP/%s\r\n\r\n", method, request, version);
-
-
-
-    printf("Client Message:\n%s\n", buf);
+    /* Log info */
     printf("Client Message METHOD: %s\n\n", method);
     printf("Client Message VERSION: %s\n\n", version);
+    printf("Content - Type: %s\n", header.content_type);
+    printf("Content - length: %d\n", header.content_length);
 
 
     /* Send a Response */
     send(client_socket, http_header, header_size, 0);
     close(client_socket);
-  }
+  } while (1);
+
+  close(server_socket);
+  httpHeaderParser_destroy(parser);
+
+  return 0;
 }
 

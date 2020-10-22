@@ -39,13 +39,13 @@ void httpHeaderParser_init(HTTP_HEADER_PARSER** parser) {
   p->root->sibling = NULL;
   p->root->setHeader = NULL;
   p->root->value = '\0';
-  _httpHeaderParser_insertHeader(p->root, "Content-Type", &_setHttpHeaderContentType);
-  _httpHeaderParser_insertHeader(p->root, "Content-Length", &_setHttpHeaderContentLength);
+  _httpHeaderParser_insertHeader(p->root, "Content-Type:", &_setHttpHeaderContentType);
+  _httpHeaderParser_insertHeader(p->root, "Content-Length:", &_setHttpHeaderContentLength);
   assert(parser != NULL);
   assert(p != NULL);
 }
 
-void setHttpHeader(HTTP_HEADER_PARSER* parser, struct http_header * header, char* key, char* val) {
+void httpHeaderParser_setHttpHeader(HTTP_HEADER_PARSER* parser, struct http_header * header, char* key, char* val) {
   assert(parser != NULL);
   struct _http_header_parser* p = (struct  _http_header_parser *) parser;
   assert(p != NULL);
@@ -78,7 +78,7 @@ SetHeader* getHttpHeaderSetter(struct parser_node *root, char *header) {
   }
 }
 
-void freeHttpHeaderParser(HTTP_HEADER_PARSER* parser) {
+void httpHeaderParser_destroy(HTTP_HEADER_PARSER* parser) {
   struct _http_header_parser* p = (struct  _http_header_parser *) parser;
   _freeParserNode(p->root);
   free(p);

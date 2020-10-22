@@ -35,13 +35,13 @@ void _httpHeaderParser_insertHeader(struct parser_node* root, char* header, SetH
 void httpHeaderParser_init(HTTP_HEADER_PARSER** parser);
 
 /**
- * @func: setHttpHeader
+ * @func: httpHeaderParser_setHttpHeader
  * @brief: Parse the header and set its value accordingly
  * @param parser HTTP_HEADER_PARSER*: pointer to the header parser handler
  * @param header char*: header to set
  * @param val char*: value the header is being set to
  */
-void setHttpHeader(HTTP_HEADER_PARSER* parser, struct http_header * header, char* key, char* val);
+void httpHeaderParser_setHttpHeader(HTTP_HEADER_PARSER* parser, struct http_header * header, char* key, char* val);
 
 /**
  * @func: _setHttpHeaderContentType
@@ -68,11 +68,11 @@ void _setHttpHeaderContentLength(struct http_header *header, char *val);
 SetHeader* getHttpHeaderSetter(struct parser_node *root, char *header);
 
 /**
- * @func: freeHttpHeaderParser
+ * @func: httpHeaderParser_destroy
  * @brief: Free the memory allocated for the Header parser
  * @param parser HTTP_HEADER_PARSER*: parser to be freed
  */
-void freeHttpHeaderParser(HTTP_HEADER_PARSER* parser);
+void httpHeaderParser_destroy(HTTP_HEADER_PARSER* parser);
 
 /**
  * @func: _freeParserNode
